@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Report - DRRMS</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 210mm; /* A4 width approx */
+            margin: 0 auto;
+            padding: 2cm;
+            background: #fff;
+        }
+
+        @media print {
+            body { 
+                padding: 0; 
+                margin: 2cm;
+            }
+            @page {
+                size: A4;
+                margin: 2cm;
+            }
+            .no-print { display: none; }
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a202c;
+            border-bottom: 2px solid #2d3748;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            color: #2c5282;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+
+        p { margin-bottom: 15px; text-align: justify; }
+
+        ul, ol { margin-bottom: 15px; padding-left: 20px; }
+        li { margin-bottom: 5px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+        
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f7fafc;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        code {
+            background-color: #f7fafc;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background-color: #1a202c;
+            color: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        pre code {
+            background-color: transparent;
+            color: #f7fafc;
+            padding: 0;
+        }
+
+        .cover-page {
+            text-align: center;
+            page-break-after: always;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 80vh;
+        }
+        
+        .cover-title {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 50px;
+        }
+
+        .team-info {
+            margin-top: 50px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cover-page">
+        <div class="cover-title">Disaster Risk & Resource Management System (DRRMS)</div>
+        <div><strong>Project Report</strong></div>
+        <div class="team-info">
+            <p><strong>Team Members:</strong></p>
+            <p>[Member 1 Name] - [ID]</p>
+            <p>[Member 2 Name] - [ID]</p>
+            <p>[Member 3 Name] - [ID]</p>
+        </div>
+        <div style="margin-top: 50px; font-size: 0.9em; color: #666;">
+            <p>Submission Date: 2026-01-23</p>
+        </div>
+    </div>
+
+    <h2>1. Introduction / Overview</h2>
+    <p>The <strong>Disaster Risk & Resource Management System (DRRMS)</strong> is a comprehensive web-based platform designed to streamline the coordination of disaster relief efforts. It serves as a centralized hub for managing incidents, resources (stock & warehouses), shelters, and volunteer workforces.</p>
+    <p>The system connects multiple stakeholders—Admins, Authorities, Dispatchers, Volunteers, and Citizens—providing them with real-time tools to report incidents, track relief supplies, and manage evacuation centers efficiently.</p>
+
+    <p><strong>Key Objectives:</strong></p>
+    <ul>
+        <li>Minimize response times during disasters.</li>
+        <li>Ensure accurate tracking of relief inventory across multiple warehouses.</li>
+        <li>Facilitate efficient volunteer deployment based on skills and location.</li>
+        <li>Provide real-time situational awareness through interactive maps.</li>
+    </ul>
+
+    <h2>2. Motivation</h2>
+    <p>Disaster management in many regions still relies on fragmented communication channels (phone calls, spreadsheets) which lead to data silos, delayed responses, and resource misallocation. We chose this project to solve the critical "logistics" problem of disaster relief. By digitizing the workflow, we can ensure that the right resources reach the right people at the right time, potentially saving lives and reducing economic loss.</p>
+
+    <h2>3. Related or Similar Projects</h2>
+    <ul>
+        <li><strong>Sahana Eden:</strong> An open-source disaster management platform. While powerful, it is often complex to set up. DRRMS focuses on a streamlined, user-friendly UI for immediate local deployment.</li>
+        <li><strong>Google Crisis Response:</strong> Provides maps and alerts but lacks the specific <em>resource inventory</em> and <em>volunteer assignment</em> granularity that local authorities need.</li>
+    </ul>
+
+    <h2>4. Benchmark Analysis</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Feature</th>
+                <th>Traditional/Manual Systems</th>
+                <th>Existing Generic Tools</th>
+                <th>DRRMS (Our Solution)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Real-time Inventory</strong></td>
+                <td>No (Spreadsheets)</td>
+                <td>Yes (ERP)</td>
+                <td><strong>Yes (Multi-Warehouse)</strong></td>
+            </tr>
+            <tr>
+                <td><strong>Volunteer Tracking</strong></td>
+                <td>Phone/SMS</td>
+                <td>Social Media</td>
+                <td><strong>Skill & Availability Based</strong></td>
+            </tr>
+            <tr>
+                <td><strong>Access Control</strong></td>
+                <td>None</td>
+                <td>Basic</td>
+                <td><strong>Role-Based (5 Levels)</strong></td>
+            </tr>
+            <tr>
+                <td><strong>User Interface</strong></td>
+                <td>N/A</td>
+                <td>Generic/Cluttered</td>
+                <td><strong>Modern, Responsive (React)</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>5. Complete Feature List</h2>
+    <ol>
+        <li><strong>Authentication & Security:</strong> Secure JWT-based login with hashed passwords and role-based protection (Admin, Authority, Dispatcher, Volunteer, Citizen).</li>
+        <li><strong>Incident Management:</strong>
+            <ul>
+                <li>Report new incidents with geolocation.</li>
+                <li>Track status (Reported, In Progress, Resolved).</li>
+                <li>View incidents on an interactive map.</li>
+            </ul>
+        </li>
+        <li><strong>Resource & Warehouse Management:</strong>
+            <ul>
+                <li><strong>Multi-Warehouse Support:</strong> Create and manage multiple storage locations.</li>
+                <li><strong>Inventory Tracking:</strong> Live tracking of stock levels (Food, Water, Medical) per warehouse.</li>
+                <li><strong>Normalization:</strong> Resources are linked to specific warehouses via ID.</li>
+            </ul>
+        </li>
+        <li><strong>Shelter Management:</strong>
+            <ul>
+                <li>Track evacuation center capacity and current occupancy.</li>
+                <li>Log residents in/out.</li>
+            </ul>
+        </li>
+        <li><strong>Volunteer Coordination:</strong>
+            <ul>
+                <li>Volunteer profiles with specific skill sets (First Aid, Rescue, etc.).</li>
+                <li>Availability status toggling.</li>
+                <li>Task assignment by Dispatchers.</li>
+            </ul>
+        </li>
+        <li><strong>Notifications:</strong> Real-time in-app alerts for system updates or emergencies.</li>
+    </ol>
+
+    <h2>6. Database Design Approach</h2>
+    <p>We utilized a <strong>Relational Database Management System (RDBMS)</strong> using MySQL. The design follows <strong>Normalization</strong> principles (up to 3NF) to reduce redundancy and ensure data integrity.</p>
+    <ul>
+        <li><strong>Separation of Concerns:</strong> Users are separated from their Roles/Profiles (Volunteers).</li>
+        <li><strong>Inventory Normalization:</strong> Instead of storing location strings in the stock table, we implemented a <code>warehouses</code> table, linking stocks via <code>warehouse_id</code>.</li>
+        <li><strong>Constraint Enforcement:</strong> Foreign keys enforce referential integrity (e.g., you cannot delete a warehouse that still contains stock).</li>
+    </ul>
+
+    <h2>7. Entity-Relationship Diagram (ERD) Overview</h2>
+    <ul>
+        <li>Users (1) ---- (M) Incidents (Reported By)</li>
+        <li>Users (1) ---- (1) Volunteers</li>
+        <li>Resources (1) ---- (M) Resource_Stocks</li>
+        <li>Warehouses (1) ---- (M) Resource_Stocks</li>
+        <li>Resource_Stocks (1) ---- (M) Resource_Deployments</li>
+        <li>Incidents (1) ---- (M) Resource_Deployments</li>
+        <li>Incidents (1) ---- (M) Assignments (Volunteer Assignments)</li>
+    </ul>
+
+    <h2>8. Schema Diagram - Key Tables</h2>
+    <ul>
+        <li><code>users</code>: id (PK), user_name, email, password, role</li>
+        <li><code>warehouses</code>: id (PK), name</li>
+        <li><code>resources</code>: id (PK), resource_name, unit, type</li>
+        <li><code>resource_stocks</code>: id (PK), resource_id (FK), warehouse_id (FK), quantity</li>
+        <li><code>incidents</code>: id (PK), title, disaster_type, status, latitude, longitude</li>
+        <li><code>shelters</code>: id (PK), name, capacity, occupancy</li>
+    </ul>
+
+    <h2>9. Queries for Feature Implementation</h2>
+    
+    <p><strong>A. Inventory with Warehouse Location</strong></p>
+    <pre><code>SELECT rs.id, r.resource_name, rs.quantity, w.name as warehouse_location
+FROM resource_stocks rs
+JOIN resources r ON rs.resource_id = r.id
+JOIN warehouses w ON rs.warehouse_id = w.id
+ORDER BY w.name;</code></pre>
+
+    <p><strong>B. Available Volunteers with Skills</strong></p>
+    <pre><code>SELECT v.id, u.user_name, v.skills
+FROM volunteers v
+JOIN users u ON v.user_id = u.id
+WHERE v.availability = 'AVAILABLE';</code></pre>
+
+    <h2>10. Conclusion</h2>
+    <p>The DRRMS project successfully digitizes the chaos of disaster management. By implementing a robust database schema and a modern frontend, we have created a tool that provides clarity and control to authorities while empowering volunteers. The system is scalable and ready for future extensions.</p>
+
+    <div class="no-print" style="margin-top: 50px; text-align: center; color: red;">
+        <p><strong>To save as PDF:</strong> Press <code>Ctrl + P</code> (or Cmd + P) and select "Save as PDF" as the destination.</p>
+    </div>
+</body>
+</html>
