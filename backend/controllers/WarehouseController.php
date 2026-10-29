@@ -17,31 +17,44 @@ final class WarehouseController
     if ($missing) Response::badRequest('Missing name', $missing);
 
     $name = trim($data['name']);
+    $lat = isset($data['latitude']) ? (float)$data['latitude'] : 0.0;
+    $lng = isset($data['longitude']) ? (float)$data['longitude'] : 0.0;
+
     try {
-        $stmt = $pdo->prepare("INSERT INTO warehouses (name) VALUES (?)");
-        $stmt->execute([$name]);
+        $stmt = $pdo->prepare("INSERT INTO warehouses (name, latitude, longitude) VALUES (?, ?, ?)");
+        $stmt->execute([$name, $lat, $lng]);
         Response::created(['message' => 'Warehouse created', 'warehouse_id' => (int)$pdo->lastInsertId()]);
     } catch (PDOException $e) {
-        if ($e->getCode() == 23000) { // Integrity constraint violation: 1062 Duplicate entry
+        if ($e->getCode() == 23000) { // Integrity constraint violation
              Response::badRequest('Warehouse name already exists');
         }
-        Response::serverError('Failed to create warehouse');
+        Response::serverError('Failed to create warehouse: ' . $e->getMessage());
     }
   }
+
   public static function update(PDO $pdo, int $id): void {
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
     $name = trim((string)($data['name'] ?? ''));
     if (!$name) Response::badRequest('Name required');
+    
+    // Optional update for location
+    $lat = isset($data['latitude']) ? (float)$data['latitude'] : null;
+    $lng = isset($data['longitude']) ? (float)$data['longitude'] : null;
 
     try {
-        $stmt = $pdo->prepare("UPDATE warehouses SET name = ? WHERE id = ?");
-        $stmt->execute([$name, $id]);
+        if ($lat !== null && $lng !== null) {
+             $stmt = $pdo->prepare("UPDATE warehouses SET name = ?, latitude = ?, longitude = ? WHERE id = ?");
+             $stmt->execute([$name, $lat, $lng, $id]);
+        } else {
+             $stmt = $pdo->prepare("UPDATE warehouses SET name = ? WHERE id = ?");
+             $stmt->execute([$name, $id]);
+        }
+
         if ($stmt->rowCount() === 0) {
             // Check if it exists
             $check = $pdo->prepare("SELECT id FROM warehouses WHERE id = ?");
             $check->execute([$id]);
             if (!$check->fetch()) Response::notFound('Warehouse not found');
-            // If it exists but name didn't change, that's fine.
         }
         Response::ok(['message' => 'Warehouse updated']);
     } catch (PDOException $e) {

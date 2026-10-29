@@ -25,7 +25,7 @@ function withAuthHeaders(): HeadersInit {
 async function handleResponse<T>(response: Response): Promise<T> {
   const json = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error((json as any).message || response.statusText);
+    throw new Error((json as any).error || (json as any).message || response.statusText);
   }
   return json as T;
 }
@@ -60,6 +60,7 @@ export interface User {
   user_id: number;
   user_name: string;
   email: string;
+  phone_number: string;
   roles: string[];
   created_at?: string;
 }
@@ -69,8 +70,14 @@ export const api = {
   login: (credentials: { email: string; password: string }) =>
     post<LoginResponse>("/api/login", credentials, false),
 
-  register: (data: { user_name: string; email: string; password: string; role: string; skills?: number[]; latitude?: number; longitude?: number; }) =>
+  register: (data: { user_name: string; email: string; password: string; role: string; phone_number: string; skills?: number[]; latitude?: number; longitude?: number; }) =>
     post<RegisterResponse>("/api/register", data, false),
+
+  verify: (data: { email: string; code: string }) =>
+    post<{ message: string }>("/api/verify", data, false),
+
+  resendVerification: (data: { email: string }) =>
+    post<{ message: string }>("/api/resend-verification", data, false),
 
   getSkills: async () => {
     const data = await get<{ skills: Skill[] }>("/api/skills");
@@ -86,6 +93,12 @@ export const api = {
   },
   updateUserRole: (userId: number, role: string) =>
     put<{ message: string }>(`/api/users/${userId}/role`, { role }),
+
+  updateProfile: (data: { user_name?: string; email?: string; phone_number?: string }) =>
+    put<{ message: string }>("/api/users/me", data),
+
+  setMyAvailability: (availability: 'AVAILABLE' | 'BUSY') =>
+    put<{ message: string }>("/api/volunteers/availability", { availability }),
 
   // Incidents
 
@@ -112,7 +125,8 @@ export const api = {
   updateIncidentStatus: (id: number, status: Incident["status"]) =>
     put<{ message: string }>(`/api/incidents/${id}/status`, { status }),
 
-  // Resources (master list)
+  addIncidentUpdate: (incidentId: number, message: string) =>
+    post<{ message: string; update_id: number }>(`/api/incidents/${incidentId}/updates`, { update_message: message }),
   getResources: async () => {
     const data = await get<{ resources: Resource[] }>("/api/resources");
     return data.resources;
@@ -135,8 +149,8 @@ export const api = {
     return data.warehouses;
   },
 
-  updateWarehouse: (id: number, name: string) =>
-    put<{ message: string }>(`/api/warehouses/${id}`, { name }),
+  updateWarehouse: (id: number, data: { name: string, latitude?: number, longitude?: number }) =>
+    put<{ message: string }>(`/api/warehouses/${id}`, data),
 
   deleteWarehouse: (id: number) =>
     fetch(`${API_CONFIG.BASE_URL}/api/warehouses/${id}`, {
@@ -144,7 +158,7 @@ export const api = {
       headers: withAuthHeaders(),
     }).then(handleResponse<{ message: string }>),
 
-  createWarehouse: (data: { name: string }) =>
+  createWarehouse: (data: { name: string; latitude?: number; longitude?: number }) =>
     post<{ message: string; warehouse_id: number }>("/api/warehouses", data),
 
   createResource: (data: { resource_name: string; unit: string; type: string }) =>
@@ -156,13 +170,27 @@ export const api = {
     return data.shelters;
   },
 
+  createShelter: (data: { name: string; location: string; capacity: number; latitude?: number; longitude?: number }) =>
+    post<{ message: string; shelter_id: number }>("/api/shelters", data),
+
   updateShelter: (id: number, data: Partial<Shelter>) =>
     put<{ message: string }>(`/api/shelters/${id}`, data),
+
+  deleteShelter: (id: number) =>
+    fetch(`${API_CONFIG.BASE_URL}/api/shelters/${id}`, {
+      method: "DELETE",
+      headers: withAuthHeaders(),
+    }).then(handleResponse<{ message: string }>),
 
   // Volunteers
   getVolunteers: async () => {
     const data = await get<{ volunteers: Volunteer[] }>("/api/volunteers");
     return data.volunteers || [];
+  },
+
+  getVolunteerProfile: async () => {
+    const data = await get<{ volunteer: Volunteer }>("/api/volunteers/me");
+    return data.volunteer;
   },
 
   updateVolunteerStatus: (volunteerId: number, availability: 'AVAILABLE' | 'BUSY') =>
@@ -214,5 +242,17 @@ export const api = {
   getShelterResidents: async (shelterId: number) => {
     const data = await get<{ residents: any[] }>(`/api/shelters/${shelterId}/residents`);
     return data.residents;
-  }
+  },
+  // Blood Donors
+  getBloodDonors: async () => {
+    const data = await get<{ donors: any[] }>("/api/donors");
+    return data.donors;
+  },
+  getMyDonorProfile: async () => {
+    return get<{ is_donor: boolean; donor?: any }>("/api/donors/me");
+  },
+  registerDonor: (data: { blood_group: string; last_donation_date: string | null }) =>
+    post<{ message: string }>("/api/donors", data),
+  updateDonorProfile: (data: { status?: 'ACTIVE' | 'INACTIVE'; last_donation_date?: string }) =>
+    put<{ message: string }>("/api/donors/me", data),
 };

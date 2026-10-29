@@ -20,6 +20,7 @@ export interface MeResponse {
     user_id: number;
     user_name: string;
     email: string;
+    phone_number?: string;
     created_at: string;
   };
   roles: Role[];
@@ -45,6 +46,7 @@ export interface IncidentUpdate {
   update_message: string;
   updated_by: number;
   updated_at: string;
+  updater_name?: string;
 }
 
 export interface IncidentDetails {
@@ -76,6 +78,8 @@ export interface Shelter {
   location: string;
   capacity: number;
   current_occupancy: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Volunteer {
@@ -89,6 +93,15 @@ export interface Volunteer {
   email?: string; // joined
   skills?: string; // joined string of skills
   skill_ids?: string;
+  gamification?: {
+    rank: string;
+    next_rank: string;
+    xp: number;
+    xp_needed: number;
+    missions: number;
+    hours: number;
+    badges: string[];
+  };
 }
 
 export interface Notification {

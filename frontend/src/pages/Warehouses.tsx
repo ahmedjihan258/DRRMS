@@ -1,25 +1,21 @@
 import { useEffect, useState } from "react";
-import { Warehouse, Trash2, Edit2, Package, Loader2, Save, X } from "lucide-react";
+import { Warehouse as WarehouseIcon, Trash2, Edit2, Loader2, Map, Search } from "lucide-react";
+import { Link } from "react-router-dom";
 import { api } from "../api/services";
 import { ResourceStock } from "../types";
 import WarehouseDetailsModal from "../components/WarehouseDetailsModal";
+import ManageWarehouseModal from "../components/ManageWarehouseModal";
 
 export default function Warehouses() {
-    const [warehouses, setWarehouses] = useState<{ id: number; name: string }[]>([]);
+    const [warehouses, setWarehouses] = useState<{ id: number; name: string; latitude?: number; longitude?: number }[]>([]);
     const [stocks, setStocks] = useState<ResourceStock[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
+    const [searchTerm, setSearchTerm] = useState("");
 
-    const [selectedWarehouse, setSelectedWarehouse] = useState<{ id: number; name: string } | null>(null);
-
-
-    // Edit State
-    const [editingId, setEditingId] = useState<number | null>(null);
-    const [editName, setEditName] = useState("");
-
-    // Create State
-    const [newWarehouseName, setNewWarehouseName] = useState("");
-    const [isCreating, setIsCreating] = useState(false);
+    const [selectedWarehouse, setSelectedWarehouse] = useState<{ id: number; name: string; latitude?: number; longitude?: number } | null>(null);
+    const [managingWarehouse, setManagingWarehouse] = useState<{ id: number; name: string; latitude?: number; longitude?: number } | undefined>(undefined);
+    const [isManageModalOpen, setIsManageModalOpen] = useState(false);
 
     useEffect(() => {
         api.me().then(setCurrentUser).catch(() => { });
@@ -38,29 +34,14 @@ export default function Warehouses() {
         }
     };
 
-    const handleCreate = async () => {
-        if (!newWarehouseName.trim()) return;
-        try {
-            // Since we only have addStock in services, checking backend if create warehouse endpoint is used...
-            // Wait, I updated services.ts to include update/delete but I missed "createWarehouse" in services.ts?
-            // Ah, I missed adding createWarehouse in services.ts in the previous step, but I added the backend handling.
-            // I will need to quickly fix services.ts or just inline the fetch here for now if I can't call tools again.
-            // Actually, I can use a raw fetch or I can just fix services.ts later. Ideally fix services.ts.
-            // But wait, the previous `AddResourceModal` might have had it? No.
-            // Let's assume I'll patch services.ts in the next turn if needed, or I can use `api.post("/api/warehouses", ...)` if `api` exposes generic post... 
-            // `api` object in services.ts doesn't expose generic post directly, it's internal.
-            // Checking services.ts content from previous turn... `post` is not exported.
-            // I will implement a quick workaround or I will use a separate step to fix services.ts.
-            // Let's assume I'll fix services.ts. For now let's write the code assuming `api.createWarehouse` exists.
-            // Actually, I will check if I can just add `createWarehouse` now.
-            await api.createWarehouse({ name: newWarehouseName });
-            setNewWarehouseName("");
-            setIsCreating(false);
-            fetchData();
-        } catch (err) {
-            console.error(err);
-            alert("Failed to create warehouse");
-        }
+    const handleCreateClick = () => {
+        setManagingWarehouse(undefined);
+        setIsManageModalOpen(true);
+    };
+
+    const handleEditClick = (w: typeof warehouses[0]) => {
+        setManagingWarehouse(w);
+        setIsManageModalOpen(true);
     };
 
     const handleDelete = async (id: number) => {
@@ -73,52 +54,56 @@ export default function Warehouses() {
         }
     };
 
-    const handleUpdate = async (id: number) => {
-        try {
-            await api.updateWarehouse(id, editName);
-            setEditingId(null);
-            fetchData();
-        } catch (err: any) {
-            alert(err.message || "Failed to update");
-        }
-    };
-
     const isAdmin = currentUser?.roles?.includes('ADMIN');
+
+    const filteredWarehouses = warehouses.filter(w =>
+        w.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     if (loading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin" /></div>;
 
-
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-800">Warehouses</h2>
-                    <p className="text-slate-500">Manage storage locations and view inventory distribution.</p>
+                    <h2 className="text-3xl font-bold text-white tracking-tight">Warehouses</h2>
+                    <p className="text-slate-300 mt-1">Manage storage locations and view inventory distribution.</p>
                 </div>
-                {isAdmin && (
-                    <button
-                        onClick={() => setIsCreating(true)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                    >
-                        <Warehouse className="w-4 h-4" />
-                        Add Warehouse
-                    </button>
-                )}
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            className="pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <Link to="/map?type=warehouses" className="bg-white/5 border border-white/10 text-white px-4 py-2 rounded-xl hover:bg-white/10 transition-all flex items-center justify-center gap-2 font-medium">
+                            <Map className="w-4 h-4" />
+                            Map
+                        </Link>
+                    </div>
+                    {isAdmin && (
+                        <button
+                            onClick={handleCreateClick}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
+                        >
+                            <WarehouseIcon className="w-4 h-4" />
+                            Add
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {isCreating && (
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-blue-100 flex items-center gap-4 animate-in fade-in slide-in-from-top-2">
-                    <input
-                        autoFocus
-                        type="text"
-                        placeholder="Warehouse Name"
-                        className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                        value={newWarehouseName}
-                        onChange={e => setNewWarehouseName(e.target.value)}
-                    />
-                    <button onClick={handleCreate} className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg"><Save className="w-5 h-5" /></button>
-                    <button onClick={() => setIsCreating(false)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg"><X className="w-5 h-5" /></button>
-                </div>
+            {isManageModalOpen && (
+                <ManageWarehouseModal
+                    warehouse={managingWarehouse}
+                    onClose={() => setIsManageModalOpen(false)}
+                    onSuccess={fetchData}
+                />
             )}
 
             {selectedWarehouse && (
@@ -130,60 +115,51 @@ export default function Warehouses() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {warehouses.map(w => {
-                    // Count items
+                {filteredWarehouses.map(w => {
                     const warehouseStocks = stocks.filter(s => s.warehouse_id === w.id || s.location === w.name);
-                    const totalQty = warehouseStocks.reduce((sum, s) => sum + s.quantity, 0);
 
                     return (
-                        <div key={w.id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                        <div
+                            key={w.id}
+                            className="rounded-2xl shadow-xl overflow-hidden flex flex-col hover:scale-[1.02] transition-all duration-300 group"
+                            style={{
+                                background: 'rgba(255, 255, 255, 0.08)',
+                                backdropFilter: 'blur(12px)',
+                                border: '1px solid rgba(255, 255, 255, 0.15)'
+                            }}
+                        >
                             <div className="p-6 flex-1">
                                 <div className="flex justify-between items-start mb-4">
-                                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                                        <Warehouse className="w-6 h-6" />
+                                    <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20 group-hover:bg-blue-500/20 transition-colors">
+                                        <WarehouseIcon className="w-6 h-6" />
                                     </div>
                                     {isAdmin && (
                                         <div className="flex gap-1">
-                                            {editingId === w.id ? (
-                                                <div className="flex items-center gap-2 absolute bg-white shadow-lg p-2 rounded-lg border z-10 right-4 top-4">
-                                                    <input
-                                                        className="w-32 px-2 py-1 text-sm border rounded"
-                                                        value={editName}
-                                                        onChange={e => setEditName(e.target.value)}
-                                                        autoFocus
-                                                    />
-                                                    <button onClick={() => handleUpdate(w.id)} className="text-green-600"><Save className="w-4 h-4" /></button>
-                                                    <button onClick={() => setEditingId(null)} className="text-slate-400"><X className="w-4 h-4" /></button>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <button onClick={() => { setEditingId(w.id); setEditName(w.name); }} className="p-1.5 text-slate-400 hover:text-blue-600 rounded">
-                                                        <Edit2 className="w-4 h-4" />
-                                                    </button>
-                                                    <button onClick={() => handleDelete(w.id)} className="p-1.5 text-slate-400 hover:text-red-600 rounded">
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </>
-                                            )}
+                                            <button onClick={() => handleEditClick(w)} className="p-2 text-slate-400 hover:text-blue-400 hover:bg-white/5 rounded-xl transition-all">
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => handleDelete(w.id)} className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/5 rounded-xl transition-all">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
                                     )}
                                 </div>
 
-                                <h3 className="text-lg font-semibold text-slate-800 mb-1">{w.name}</h3>
-                                <p className="text-slate-500 text-sm mb-4">Storage Facility</p>
+                                <h3 className="text-xl font-bold text-white mb-1 tracking-tight">{w.name}</h3>
+                                <p className="text-slate-400 text-sm mb-6">Storage Facility</p>
 
                                 <div className="space-y-4">
                                     <div>
-                                        <div className="flex justify-between text-sm mb-1">
-                                            <span className="text-slate-600">Stock Variety</span>
-                                            <span className="font-medium text-slate-700">{warehouseStocks.length} Types</span>
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span className="text-slate-300 font-medium">Stock Variety</span>
+                                            <span className="font-bold text-blue-400">{warehouseStocks.length} Types</span>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-end pt-4 border-t border-slate-50">
+                                    <div className="flex items-center justify-end pt-4 border-t border-white/10 mt-2">
                                         <button
                                             onClick={() => setSelectedWarehouse(w)}
-                                            className="text-blue-600 hover:text-blue-700 text-sm font-medium hover:underline"
+                                            className="text-blue-400 hover:text-blue-300 text-sm font-bold tracking-tight transition-colors uppercase"
                                         >
                                             View Details
                                         </button>

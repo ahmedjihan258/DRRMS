@@ -8,7 +8,7 @@ final class UserController
 {
   public static function list(PDO $pdo): void {
     $stmt = $pdo->query("
-      SELECT u.user_id, u.user_name, u.email, u.created_at,
+      SELECT u.user_id, u.user_name, u.email, u.phone_number, u.created_at,
              GROUP_CONCAT(r.role_name SEPARATOR ',') as roles
       FROM users u
       LEFT JOIN user_roles ur ON ur.user_id = u.user_id
@@ -62,6 +62,46 @@ final class UserController
     } catch (Exception $e) {
       if ($pdo->inTransaction()) $pdo->rollBack();
       Response::serverError('Failed to update role');
+    }
+  }
+
+  public static function updateProfile(PDO $pdo, int $userId): void {
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+    
+    // Only allow updating name, phone. Email is identity, maybe allow but risky without verify?
+    // User request: "view and edit their details ... like they shouldnot be able to change their role but can see details"
+    // Let's allow name and phone and email.
+    
+    $updates = [];
+    $params = [];
+
+    if (isset($data['user_name'])) {
+        $updates[] = "user_name = ?";
+        $params[] = trim((string)$data['user_name']);
+    }
+    if (isset($data['email'])) {
+        $updates[] = "email = ?";
+        $params[] = strtolower(trim((string)$data['email']));
+    }
+    if (isset($data['phone_number'])) {
+        $updates[] = "phone_number = ?";
+        $params[] = trim((string)$data['phone_number']);
+    }
+
+    if (empty($updates)) {
+        Response::badRequest('No fields to update');
+    }
+
+    $params[] = $userId;
+    $sql = "UPDATE users SET " . implode(', ', $updates) . " WHERE user_id = ?";
+
+    try {
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        Response::ok(['message' => 'Profile updated']);
+    } catch (PDOException $e) {
+        // Handle duplicate email if unique constraint exists
+        Response::badRequest('Update failed (email might be taken)');
     }
   }
 }

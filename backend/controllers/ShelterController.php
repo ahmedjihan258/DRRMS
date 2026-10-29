@@ -14,8 +14,11 @@ final class ShelterController
     $cap = Validator::asInt($data['capacity']);
     if ($cap === null || $cap < 0) Response::badRequest('Invalid capacity');
 
-    $stmt = $pdo->prepare("INSERT INTO shelters (name, location, capacity) VALUES (?, ?, ?)");
-    $stmt->execute([trim((string)$data['name']), trim((string)$data['location']), $cap]);
+    $lat = isset($data['latitude']) ? (float)$data['latitude'] : 0.0;
+    $lng = isset($data['longitude']) ? (float)$data['longitude'] : 0.0;
+
+    $stmt = $pdo->prepare("INSERT INTO shelters (name, location, capacity, latitude, longitude) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([trim((string)$data['name']), trim((string)$data['location']), $cap, $lat, $lng]);
 
     Response::created(['message' => 'Shelter created', 'shelter_id' => (int)$pdo->lastInsertId()]);
   }
@@ -178,6 +181,8 @@ final class ShelterController
     if (isset($data['location'])) { $fields[] = 'location = ?'; $values[] = trim((string)$data['location']); }
     if (isset($data['capacity'])) { $fields[] = 'capacity = ?'; $values[] = (int)$data['capacity']; }
     if (isset($data['current_occupancy'])) { $fields[] = 'current_occupancy = ?'; $values[] = (int)$data['current_occupancy']; }
+    if (isset($data['latitude'])) { $fields[] = 'latitude = ?'; $values[] = (float)$data['latitude']; }
+    if (isset($data['longitude'])) { $fields[] = 'longitude = ?'; $values[] = (float)$data['longitude']; }
 
     if (empty($fields)) {
       Response::badRequest('No fields to update');
@@ -190,5 +195,11 @@ final class ShelterController
     $stmt->execute($values);
 
     Response::ok(['message' => 'Shelter updated']);
+  }
+
+  public static function delete(PDO $pdo, int $id): void {
+    $stmt = $pdo->prepare("DELETE FROM shelters WHERE id = ?");
+    $stmt->execute([$id]);
+    Response::ok(['message' => 'Shelter deleted']);
   }
 }

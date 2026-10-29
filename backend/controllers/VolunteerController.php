@@ -26,6 +26,100 @@ final class VolunteerController
     }
   }
 
+  public static function getMe(PDO $pdo, int $userId): void {
+    $stmt = $pdo->prepare("SELECT * FROM volunteers WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $vol = $stmt->fetch();
+    if (!$vol) Response::notFound('Volunteer profile not found');
+
+    // --- Gamification Stats Calculation ---
+    $vid = $vol['id'];
+
+    // 1. Missions (Resolved Incidents)
+    $mStmt = $pdo->prepare("SELECT COUNT(DISTINCT va.incident_id) 
+                            FROM volunteer_assignments va
+                            JOIN incidents i ON i.id = va.incident_id
+                            WHERE va.volunteer_id = ? AND i.status = 'RESOLVED'");
+    $mStmt->execute([$vid]);
+    $missions = (int)$mStmt->fetchColumn();
+
+    // 2. Hours Served (Heuristic: 4 hours per resolved mission)
+    $hours = $missions * 4;
+
+    // 3. XP Calculation
+    // Base: 150 XP per mission + 10 XP per hour
+    // Skills: 100 XP per skill
+    $xp = ($missions * 150) + ($hours * 10);
+    
+    $sStmt = $pdo->prepare("SELECT COUNT(*) FROM volunteer_skills WHERE volunteer_id = ?");
+    $sStmt->execute([$vid]);
+    $skillCount = (int)$sStmt->fetchColumn();
+    $xp += ($skillCount * 100);
+
+    // 4. Rank Calculation
+    $rank = 'ROOKIE';
+    $nextRank = 'GUARDIAN';
+    $xpToNext = 500 - $xp;  // 0 - 500
+
+    if ($xp >= 2000) {
+        $rank = 'LEGEND';
+        $nextRank = 'MAX';
+        $xpToNext = 0;
+    } elseif ($xp >= 500) {
+        $rank = 'GUARDIAN';
+        $nextRank = 'LEGEND';
+        $xpToNext = 2000 - $xp; // 500 - 2000
+    }
+
+    if ($xpToNext < 0) $xpToNext = 0;
+
+    // 5. Badges Logic
+    $badges = [];
+
+    // Badge: Aqua Guard (Participated in Flood)
+    $floodStmt = $pdo->prepare("SELECT COUNT(DISTINCT va.incident_id) 
+                                FROM volunteer_assignments va
+                                JOIN incidents i ON i.id = va.incident_id
+                                WHERE va.volunteer_id = ? AND i.disaster_type = 'FLOOD'");
+    $floodStmt->execute([$vid]);
+    if ($floodStmt->fetchColumn() >= 1) { 
+        $badges[] = 'Aqua Guard';
+    }
+
+    // Badge: Night Owl (Assigned between 8PM and 6AM)
+    // Note: assigned_at is DATETIME/TIMESTAMP
+    $nightStmt = $pdo->prepare("SELECT COUNT(*) FROM volunteer_assignments 
+                                WHERE volunteer_id = ? 
+                                AND (HOUR(assigned_at) >= 20 OR HOUR(assigned_at) < 6)");
+    $nightStmt->execute([$vid]);
+    if ($nightStmt->fetchColumn() >= 1) {
+        $badges[] = 'Night Owl';
+    }
+
+    // Badge: Medic (check skills for 'First Aid' or 'CPR')
+    // Since we don't know exact skill names in DB, we'll join and check text
+    $medicStmt = $pdo->prepare("SELECT COUNT(*) FROM volunteer_skills vs
+                                JOIN skills s ON s.id = vs.skill_id
+                                WHERE vs.volunteer_id = ? 
+                                AND (s.name LIKE '%First Aid%' OR s.name LIKE '%Medic%' OR s.name LIKE '%CPR%')");
+    $medicStmt->execute([$vid]);
+    if ($medicStmt->fetchColumn() >= 1) {
+        $badges[] = 'Medic';
+    }
+
+    $vol['gamification'] = [
+        'rank' => $rank,
+        'next_rank' => $nextRank,
+        'xp' => $xp,
+        'xp_needed' => $xpToNext,
+        'missions' => $missions,
+        'hours' => $hours,
+        'badges' => $badges
+    ];
+
+    Response::ok(['volunteer' => $vol]);
+  }
+
   public static function setAvailability(PDO $pdo, int $userId): void {
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
     $missing = Validator::requireFields($data, ['availability']);
@@ -149,6 +243,20 @@ final class VolunteerController
     $pdo->prepare("UPDATE volunteers SET availability = 'BUSY' WHERE id = ?")->execute([$vid]);
 
     Response::created(['message' => 'Volunteer assigned', 'assignment_id' => (int)$pdo->lastInsertId()]);
+
+    // NOTIFY Volunteer
+    // Get user_id of the volunteer
+    $uStmt = $pdo->prepare("SELECT user_id FROM volunteers WHERE id = ?");
+    $uStmt->execute([$vid]);
+    $userId = $uStmt->fetchColumn();
+
+    if ($userId) {
+        $incidentTitleStmt = $pdo->prepare("SELECT title FROM incidents WHERE id = ?");
+        $incidentTitleStmt->execute([$iid]);
+        $incTitle = $incidentTitleStmt->fetchColumn();
+
+        NotificationManager::send($pdo, (int)$userId, 'New Assignment', "You have been assigned to incident: $incTitle. Please proceed to the location.", 'WARNING');
+    }
   }
 
   public static function listAssignments(PDO $pdo): void {

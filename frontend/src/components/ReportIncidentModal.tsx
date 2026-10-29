@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { X, AlertTriangle, MapPin, Loader2 } from "lucide-react";
+import { X, AlertTriangle, MapPin, Loader2, Locate } from "lucide-react";
 import { api } from "../api/services";
 import { Incident } from "../types";
+import LeafletMap from "./common/LeafletMap";
 
 interface ReportIncidentModalProps {
     isOpen: boolean;
@@ -66,40 +67,48 @@ export default function ReportIncidentModal({ isOpen, onClose, onSuccess }: Repo
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-all">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md transition-all">
+            <div
+                className="rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                style={{
+                    background: 'rgba(15, 23, 42, 0.95)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
+            >
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div className="px-6 py-5 border-b border-white/10 flex justify-between items-center bg-white/5">
                     <div>
-                        <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <AlertTriangle className="w-5 h-5 text-red-500" />
+                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5 text-rose-500" />
                             Report Incident
                         </h3>
-                        <p className="text-xs text-slate-500">Provide details about the emergency situation.</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Provide details about the emergency situation.</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors"
+                        className="text-slate-400 hover:text-white hover:bg-white/5 p-2 rounded-xl transition-all"
                     >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Body */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleSubmit} className="p-8 space-y-5">
                     {error && (
-                        <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-100">
+                        <div className="mb-6 p-4 bg-rose-500/10 text-rose-400 text-sm rounded-xl border border-rose-500/20 flex items-center gap-3 animate-shake">
+                            <AlertTriangle className="w-4 h-4 shrink-0" />
                             {error}
                         </div>
                     )}
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">
-                            Incident Title <span className="text-red-500">*</span>
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-slate-300 ml-1">
+                            Incident Title <span className="text-rose-500">*</span>
                         </label>
                         <input
                             type="text"
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                            className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
                             placeholder="e.g., Flood in North District"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
@@ -108,39 +117,39 @@ export default function ReportIncidentModal({ isOpen, onClose, onSuccess }: Repo
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-slate-300 ml-1">Type</label>
                             <select
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none"
                                 value={disasterType}
                                 onChange={(e) => setDisasterType(e.target.value as Incident["disaster_type"])}
                             >
-                                <option value="FLOOD">Flood</option>
-                                <option value="CYCLONE">Cyclone</option>
-                                <option value="FIRE">Fire</option>
-                                <option value="LANDSLIDE">Landslide</option>
-                                <option value="EARTHQUAKE">Earthquake</option>
+                                <option value="FLOOD" className="bg-slate-900">Flood</option>
+                                <option value="CYCLONE" className="bg-slate-900">Cyclone</option>
+                                <option value="FIRE" className="bg-slate-900">Fire</option>
+                                <option value="LANDSLIDE" className="bg-slate-900">Landslide</option>
+                                <option value="EARTHQUAKE" className="bg-slate-900">Earthquake</option>
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Severity</label>
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-slate-300 ml-1">Severity</label>
                             <select
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none"
                                 value={severity}
                                 onChange={(e) => setSeverity(e.target.value as Incident["severity"])}
                             >
-                                <option value="LOW">Low</option>
-                                <option value="MEDIUM">Medium</option>
-                                <option value="HIGH">High</option>
-                                <option value="CRITICAL">Critical</option>
+                                <option value="LOW" className="bg-slate-900">Low</option>
+                                <option value="MEDIUM" className="bg-slate-900">Medium</option>
+                                <option value="HIGH" className="bg-slate-900">High</option>
+                                <option value="CRITICAL" className="bg-slate-900 text-rose-400">Critical</option>
                             </select>
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-slate-300 ml-1">Description</label>
                         <textarea
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                            className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
                             rows={3}
                             placeholder="Describe the situation..."
                             value={description}
@@ -148,17 +157,47 @@ export default function ReportIncidentModal({ isOpen, onClose, onSuccess }: Repo
                         />
                     </div>
 
-                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                        <div className="flex items-center gap-2 mb-3 text-sm font-medium text-slate-700">
-                            <MapPin className="w-4 h-4 text-slate-400" />
-                            Location Coordinates
+                    <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                        <div className="flex justify-between items-center mb-3">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-blue-400" />
+                                Location Selection
+                            </label>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (!navigator.geolocation) return alert("Geolocation not supported");
+                                    navigator.geolocation.getCurrentPosition(
+                                        (pos) => {
+                                            setLatitude(pos.coords.latitude.toString());
+                                            setLongitude(pos.coords.longitude.toString());
+                                        },
+                                        () => alert("Unable to retrieve location")
+                                    );
+                                }}
+                                className="flex items-center text-[10px] font-bold text-blue-400 hover:text-blue-300 uppercase tracking-tight"
+                            >
+                                <Locate className="w-3 h-3 mr-1" />
+                                Use My Location
+                            </button>
+                        </div>
+                        <div className="h-40 border border-white/10 rounded-xl overflow-hidden mb-4 opacity-90 hover:opacity-100 transition-opacity">
+                            <LeafletMap
+                                mode="pick"
+                                initialPosition={(latitude && longitude) ? { lat: parseFloat(latitude), lng: parseFloat(longitude) } : undefined}
+                                onPositionChange={(pos: { lat: number, lng: number }) => {
+                                    setLatitude(pos.lat.toString());
+                                    setLongitude(pos.lng.toString());
+                                }}
+                                height="100%"
+                            />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <input
                                     type="number"
                                     step="any"
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                                    className="w-full bg-white/5 px-4 py-2 border border-white/10 rounded-xl text-white text-[10px] font-bold focus:outline-none focus:ring-1 focus:ring-blue-500/50"
                                     placeholder="Latitude"
                                     value={latitude}
                                     onChange={(e) => setLatitude(e.target.value)}
@@ -169,7 +208,7 @@ export default function ReportIncidentModal({ isOpen, onClose, onSuccess }: Repo
                                 <input
                                     type="number"
                                     step="any"
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                                    className="w-full bg-white/5 px-4 py-2 border border-white/10 rounded-xl text-white text-[10px] font-bold focus:outline-none focus:ring-1 focus:ring-blue-500/50"
                                     placeholder="Longitude"
                                     value={longitude}
                                     onChange={(e) => setLongitude(e.target.value)}
@@ -177,23 +216,20 @@ export default function ReportIncidentModal({ isOpen, onClose, onSuccess }: Repo
                                 />
                             </div>
                         </div>
-                        <p className="text-[10px] text-slate-400 mt-2">
-                            Enter valid GPS coordinates (e.g., 23.8103, 90.4125).
-                        </p>
                     </div>
 
                     <div className="pt-4 flex justify-end gap-3">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="px-6 py-2.5 text-sm font-bold uppercase tracking-tight text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm shadow-blue-200 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="px-8 py-2.5 bg-rose-600 text-white text-sm font-bold uppercase tracking-widest rounded-xl hover:bg-rose-500 flex items-center gap-2 disabled:opacity-50 transition-all shadow-lg shadow-rose-900/20 active:scale-95"
                         >
                             {loading ? (
                                 <>

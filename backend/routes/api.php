@@ -20,6 +20,7 @@ require_once __DIR__ . '/../controllers/VolunteerController.php';
 require_once __DIR__ . '/../controllers/NotificationController.php';
 require_once __DIR__ . '/../controllers/SkillController.php';
 require_once __DIR__ . '/../controllers/WarehouseController.php';
+require_once __DIR__ . '/../controllers/BloodDonorController.php';
 
 
 
@@ -51,6 +52,12 @@ if (route('POST', '/api/register', $method, $path)) {
 if (route('POST', '/api/login', $method, $path)) {
   AuthController::login($pdo, $settings);
 }
+if (route('POST', '/api/verify', $method, $path)) {
+  AuthController::verify($pdo);
+}
+if (route('POST', '/api/resend-verification', $method, $path)) {
+  AuthController::resendVerification($pdo);
+}
 
 
 
@@ -71,6 +78,9 @@ if (route('GET', '/api/users', $method, $path)) {
 if (matchId('#^/api/users/(\d+)/role$#', $path, $m) && $method === 'PUT') {
   RoleMiddleware::requireRole($pdo, $userId, ['ADMIN']);
   UserController::updateRole($pdo, (int)$m[1]);
+}
+if (route('PUT', '/api/users/me', $method, $path)) {
+  UserController::updateProfile($pdo, $userId);
 }
 
 
@@ -163,6 +173,10 @@ if (matchId('#^/api/shelters/(\d+)$#', $path, $m) && $method === 'PUT') {
   RoleMiddleware::requireRole($pdo, $userId, ['ADMIN','DISPATCHER']); 
   ShelterController::update($pdo, (int)$m[1]);
 }
+if (matchId('#^/api/shelters/(\d+)$#', $path, $m) && $method === 'DELETE') {
+  RoleMiddleware::requireRole($pdo, $userId, ['ADMIN']);
+  ShelterController::delete($pdo, (int)$m[1]);
+}
 
 
 
@@ -170,6 +184,10 @@ if (matchId('#^/api/shelters/(\d+)$#', $path, $m) && $method === 'PUT') {
 if (route('GET', '/api/volunteers', $method, $path)) {
   RoleMiddleware::requireRole($pdo, $userId, ['ADMIN','DISPATCHER','AUTHORITY']);
   VolunteerController::list($pdo);
+}
+if (route('GET', '/api/volunteers/me', $method, $path)) {
+  RoleMiddleware::requireRole($pdo, $userId, ['VOLUNTEER']);
+  VolunteerController::getMe($pdo, $userId);
 }
 if (route('POST', '/api/volunteers/profile', $method, $path)) {
   RoleMiddleware::requireRole($pdo, $userId, ['VOLUNTEER','ADMIN']);
@@ -231,6 +249,22 @@ if (matchId('#^/api/warehouses/(\d+)$#', $path, $m) && $method === 'PUT') {
 if (matchId('#^/api/warehouses/(\d+)$#', $path, $m) && $method === 'DELETE') {
     RoleMiddleware::requireRole($pdo, $userId, ['ADMIN']);
     WarehouseController::delete($pdo, (int)$m[1]);
+}
+
+
+// Blood Donors
+if (route('GET', '/api/donors', $method, $path)) {
+    BloodDonorController::list($pdo);
+}
+if (route('GET', '/api/donors/me', $method, $path)) {
+    BloodDonorController::me($pdo, $userId);
+}
+if (route('POST', '/api/donors', $method, $path)) {
+    // Anyone can become donor? Yes as per requirement.
+    BloodDonorController::register($pdo, $userId);
+}
+if (route('PUT', '/api/donors/me', $method, $path)) {
+    BloodDonorController::update($pdo, $userId);
 }
 
 

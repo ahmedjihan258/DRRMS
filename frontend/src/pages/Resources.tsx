@@ -89,8 +89,8 @@ export default function Resources() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Resource Management</h2>
-          <p className="text-slate-500 mt-1">Track relief items, equipment, and supplies.</p>
+          <h2 className="text-3xl font-bold text-white tracking-tight">Resource Management</h2>
+          <p className="text-slate-300 mt-1">Track relief items, equipment, and supplies.</p>
         </div>
         <div className="flex items-center space-x-3">
           {isAdmin && (
@@ -105,11 +105,11 @@ export default function Resources() {
 
           {/* Search Input */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input
               type="text"
               placeholder="Search resources..."
-              className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+              className="pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 w-full sm:w-64 transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -119,7 +119,7 @@ export default function Resources() {
           <div className="relative">
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`p-2 border rounded-lg hover:bg-slate-50 transition-colors ${statusFilter !== "ALL" ? "border-blue-500 text-blue-600 bg-blue-50" : "border-slate-200 text-slate-600"
+              className={`p-2 border rounded-xl hover:bg-white/10 transition-all ${statusFilter !== "ALL" ? "border-blue-500 text-blue-400 bg-blue-500/10" : "border-white/10 text-slate-400"
                 }`}
             >
               <Filter className="w-5 h-5" />
@@ -131,7 +131,7 @@ export default function Resources() {
                   className="fixed inset-0 z-10"
                   onClick={() => setIsFilterOpen(false)}
                 />
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-20">
+                <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-2 z-20 backdrop-blur-xl">
                   <button
                     onClick={() => { setStatusFilter("ALL"); setIsFilterOpen(false); }}
                     className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${statusFilter === 'ALL' ? 'text-blue-600 font-medium' : 'text-slate-700'}`}
@@ -163,43 +163,50 @@ export default function Resources() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+      <div
+        className="rounded-2xl shadow-2xl overflow-hidden"
+        style={{
+          background: 'rgba(255, 255, 255, 0.08)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.15)'
+        }}
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-6 py-4 text-sm font-semibold text-slate-600">Resource Name</th>
-                <th className="px-6 py-4 text-sm font-semibold text-slate-600">Quantity</th>
-                <th className="px-6 py-4 text-sm font-semibold text-slate-600">Location</th>
-                <th className="px-6 py-4 text-sm font-semibold text-slate-600">Status</th>
-                <th className="px-6 py-4 text-sm font-semibold text-slate-600">Actions</th>
+              <tr className="bg-white/5 border-b border-white/10">
+                <th className="px-6 py-4 text-sm font-bold text-slate-300">Resource Name</th>
+                <th className="px-6 py-4 text-sm font-bold text-slate-300">Quantity</th>
+                <th className="px-6 py-4 text-sm font-bold text-slate-300">Location</th>
+                <th className="px-6 py-4 text-sm font-bold text-slate-300">Status</th>
+                <th className="px-6 py-4 text-sm font-bold text-slate-300">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-white/5">
               {filteredStocks.map((stock) => {
                 const status = getStockStatus(stock.quantity, stock.unit);
 
                 return (
-                  <tr key={stock.id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={stock.id} className="hover:bg-white/5 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg mr-3">
+                        <div className="p-2 bg-blue-500/10 text-blue-400 rounded-xl mr-3 group-hover:bg-blue-500/20 transition-colors">
                           <Package className="w-5 h-5" />
                         </div>
-                        <span className="font-medium text-slate-800">{stock.resource_name}</span>
+                        <span className="font-bold text-white">{stock.resource_name}</span>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 text-slate-600">
+                    <td className="px-6 py-4 text-slate-300 font-medium">
                       {stock.quantity} {stock.unit}
                     </td>
 
-                    <td className="px-6 py-4 text-slate-600">{stock.location}</td>
+                    <td className="px-6 py-4 text-slate-400">{stock.location}</td>
 
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${status === 'AVAILABLE' ? 'bg-emerald-100 text-emerald-700' :
-                        status === 'LOW_STOCK' ? 'bg-orange-100 text-orange-700' :
-                          'bg-red-100 text-red-700'
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-tight uppercase border ${status === 'AVAILABLE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                        status === 'LOW_STOCK' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                          'bg-rose-500/10 text-rose-400 border-rose-500/20'
                         }`}>
                         {status.replace(/_/g, ' ')}
                       </span>
@@ -208,9 +215,9 @@ export default function Resources() {
                     <td className="px-6 py-4">
                       <button
                         onClick={() => setSelectedStock(stock)}
-                        className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
+                        className="text-blue-400 hover:text-blue-300 font-bold text-sm tracking-tight transition-colors"
                       >
-                        Manage
+                        MANAGE
                       </button>
                     </td>
                   </tr>

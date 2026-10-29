@@ -80,9 +80,11 @@ final class IncidentController
     $incident = $stmt->fetch();
     if (!$incident) Response::notFound('Incident not found');
 
-    $u = $pdo->prepare("SELECT update_id, incident_id, update_message, updated_by, updated_at
-                        FROM incident_updates WHERE incident_id = ?
-                        ORDER BY updated_at DESC");
+    $u = $pdo->prepare("SELECT iu.*, u.user_name AS updater_name
+                        FROM incident_updates iu
+                        LEFT JOIN users u ON u.user_id = iu.updated_by
+                        WHERE iu.incident_id = ?
+                        ORDER BY iu.updated_at DESC");
     $u->execute([$id]);
 
     Response::ok(['incident' => $incident, 'updates' => $u->fetchAll()]);
@@ -104,15 +106,23 @@ final class IncidentController
     // If resolved, free up volunteers
     if ($status === 'RESOLVED') {
       // Find volunteers assigned to this incident
-      $vsql = "SELECT volunteer_id FROM volunteer_assignments WHERE incident_id = ?";
+      $vsql = "SELECT va.volunteer_id, v.user_id 
+               FROM volunteer_assignments va
+               JOIN volunteers v ON v.id = va.volunteer_id
+               WHERE va.incident_id = ?";
       $vstmt = $pdo->prepare($vsql);
       $vstmt->execute([$incidentId]);
-      $volunteers = $vstmt->fetchAll(PDO::FETCH_COLUMN);
+      $volunteers = $vstmt->fetchAll(PDO::FETCH_ASSOC);
 
       if (!empty($volunteers)) {
         // Update their status to AVAILABLE
-        $ids = implode(',', array_map('intval', $volunteers));
+        $ids = implode(',', array_map(fn($v) => (int)$v['volunteer_id'], $volunteers));
         $pdo->exec("UPDATE volunteers SET availability = 'AVAILABLE' WHERE id IN ($ids)");
+
+        // NOTIFY Volunteers: Mission Complete
+        foreach ($volunteers as $vol) {
+            NotificationManager::sendToUser($pdo, (int)$vol['user_id'], 'Mission Complete!', 'The incident you were assigned to has been resolved. Great work!', 'INFO');
+        }
       }
     }
 

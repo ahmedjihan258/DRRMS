@@ -7,6 +7,7 @@ export type MeResponse = {
     user_id?: number;
     user_name?: string;
     email?: string;
+    phone_number?: string;
     created_at?: string;
   };
   roles?: string[];
